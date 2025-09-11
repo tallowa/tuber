@@ -1,0 +1,168 @@
+<div class="container my-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Your Wheelo Dashboard</h1>
+    <%= link_to "Add Vehicle", new_vehicle_path, class: "btn btn-primary wheelo-btn" %>
+  </div>
+  
+  <% if @revenue_summary %>
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <div class="card earnings-card">
+          <div class="card-body">
+            <h4 class="text-white mb-3">💰 Your Earnings - <%= @revenue_summary[:period] %></h4>
+            <div class="row text-center">
+              <div class="col-md-4">
+                <h3>$<%= number_with_precision(@revenue_summary[:total_revenue], precision: 0) %></h3>
+                <p class="mb-0">Total Revenue</p>
+              </div>
+              <div class="col-md-4">
+                <h3>$<%= number_with_precision(@revenue_summary[:ride_revenue], precision: 0) %></h3>
+                <p class="mb-0">From Rides</p>
+              </div>
+              <div class="col-md-4">
+                <h3>$<%= number_with_precision(@revenue_summary[:rental_revenue], precision: 0) %></h3>
+                <p class="mb-0">From Rentals</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+  
+  <div class="row">
+    <!-- My Vehicles -->
+    <div class="col-lg-6 mb-4">
+      <div class="card wheelo-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">🚗 My Vehicles</h5>
+          <%= link_to "Manage All", vehicles_path, class: "btn btn-sm btn-outline-primary" %>
+        </div>
+        <div class="card-body">
+          <% if @my_vehicles.any? %>
+            <% @my_vehicles.each do |vehicle| %>
+              <div class="d-flex align-items-center justify-content-between mb-3 p-2 border rounded">
+                <div class="d-flex align-items-center">
+                  <% if vehicle.photos.any? %>
+                    <%= image_tag vehicle.photos.first, 
+                                 class: "rounded me-3", 
+                                 style: "width: 50px; height: 50px; object-fit: cover;" %>
+                  <% end %>
+                  <div>
+                    <h6 class="mb-0"><%= vehicle.display_name %></h6>
+                    <div>
+                      <% if vehicle.available_for_rides? %>
+                        <span class="badge bg-success">Rides</span>
+                      <% end %>
+                      <% if vehicle.available_for_rentals? %>
+                        <span class="badge bg-info">Rentals</span>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+                <%= link_to "View", vehicle, class: "btn btn-sm btn-outline-primary" %>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="text-center py-4">
+              <p class="text-muted">No vehicles added yet</p>
+              <%= link_to "Add Your First Vehicle", new_vehicle_path, 
+                         class: "btn btn-primary wheelo-btn" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="col-lg-6 mb-4">
+      <div class="card wheelo-card">
+        <div class="card-header">
+          <h5 class="mb-0">📋 Recent Activity</h5>
+        </div>
+        <div class="card-body">
+          <% if @recent_ride_requests.any? || @recent_rental_bookings.any? %>
+            <!-- Recent Ride Requests -->
+            <% @recent_ride_requests.limit(3).each do |request| %>
+              <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                <div>
+                  <strong>Ride Request</strong><br>
+                  <small><%= request.rider.full_name %> • <%= request.vehicle.display_name %></small>
+                </div>
+                <span class="badge bg-<%= request.status == 'pending' ? 'warning' : 'success' %>">
+                  <%= request.status.capitalize %>
+                </span>
+              </div>
+            <% end %>
+            
+            <!-- Recent Rental Bookings -->
+            <% @recent_rental_bookings.limit(3).each do |booking| %>
+              <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                <div>
+                  <strong>Rental Booking</strong><br>
+                  <small><%= booking.renter.full_name %> • <%= booking.vehicle.display_name %></small>
+                </div>
+                <span class="badge bg-<%= booking.status == 'pending' ? 'warning' : 'success' %>">
+                  <%= booking.status.capitalize %>
+                </span>
+              </div>
+            <% end %>
+          <% else %>
+            <p class="text-muted text-center py-3">No recent activity</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <!-- My Requests (as rider/renter) -->
+    <div class="col-lg-6 mb-4">
+      <div class="card wheelo-card">
+        <div class="card-header">
+          <h5 class="mb-0">🎫 My Bookings</h5>
+        </div>
+        <div class="card-body">
+          <% recent_bookings = (@my_ride_requests + @my_rental_bookings).sort_by(&:created_at).reverse %>
+          <% if recent_bookings.any? %>
+            <% recent_bookings.limit(5).each do |booking| %>
+              <div class="mb-2 p-2 border rounded">
+                <% if booking.is_a?(RideRequest) %>
+                  <strong>🚕 Ride</strong> with <%= booking.vehicle.owner.full_name %><br>
+                  <small><%= booking.pickup_address %> → <%= booking.destination_address %></small>
+                <% else %>
+                  <strong>🗝️ Rental</strong> of <%= booking.vehicle.display_name %><br>
+                  <small><%= booking.start_time.strftime("%m/%d") %> - <%= booking.end_time.strftime("%m/%d") %></small>
+                <% end %>
+                <span class="badge bg-primary float-end"><%= booking.status.capitalize %></span>
+              </div>
+            <% end %>
+          <% else %>
+            <p class="text-muted text-center py-3">No bookings yet</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="col-lg-6 mb-4">
+      <div class="card wheelo-card">
+        <div class="card-header">
+          <h5 class="mb-0">⚡ Quick Actions</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <%= link_to "🚗 Add Vehicle", new_vehicle_path, 
+                       class: "btn btn-outline-primary wheelo-btn" %>
+            <%= link_to "🔍 Find Rides", search_rides_path, 
+                       class: "btn btn-outline-success wheelo-btn" %>
+            <%= link_to "🗝️ Rent a Car", search_vehicles_path, 
+                       class: "btn btn-outline-info wheelo-btn" %>
+            <%= link_to "📊 View Analytics", vehicles_path, 
+                       class: "btn btn-outline-secondary wheelo-btn" %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
