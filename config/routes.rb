@@ -35,6 +35,19 @@ Rails.application.routes.draw do
         patch :end_rental
       end
     end
-
-
+  end
+  
+  # Rider/Renter interfaces
+  resources :ride_requests, only: [:new, :create, :show, :index]
+  resources :rental_bookings, only: [:new, :create, :show, :index]
+  
+  # Search & Discovery
+  get 'search', to: 'search#index'
+  get 'search/vehicles', to: 'search#vehicles'
+  get 'search/rides', to: 'search#rides'
+  
+  # User Profile & Dashboard
+  get 'dashboard', to: 'dashboard#index'
+  resources :users, only: [:show, :edit, :update]
 end
+
